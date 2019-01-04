@@ -1,23 +1,149 @@
 使用C语言，复制代码，粘贴即可使用
-char* add(char *a, char *b, int m, int n) {
-	// 为结果分配内存空间。 
-	char *c = (char*)malloc((m + 2)* sizeof(char)); 
-	memset(c, 0, (m + 2) * sizeof(char)); 
-	// 将字符（0 + 0x30 到 9 + 0x30）转换为数字（0到9）进行计算。 
-	for (int i = m, j = n - 1; j >= 0; --i, --j) 
-		c[i] += (b[j] - 0x30); 
-	for (int i = m, j = m - 1; j >= 0; --i, --j) { 
-		c[i] += (a[j] - 0x30); 
-		if (c[i] > 9) { 
-				c[i - 1] += 1; c[i] -= 10; 
-			} 
-	} // 将由纯数字组成的结果转换为字符串，并去除首部可能还存在的零。 
-	c[m + 1] = '/0'; 
-	for (int i = 0; i != m + 1; ++i) 
-		c[i] += 0x30; 
-	if (c[0] == 0x30) 
-		for (int i = 0; c[i] != '/0'; ++i) 
-			c[i] = c[i + 1]; 
-			// 返回结果所在内存单元的首地址。 
-	return c; 
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+ #define CLEAR(A, V) memset((A), (V), sizeof(A))
+
+// 最大长度 
+#define MAX_N 1005
+// 去除前导0的 
+char s1[MAX_N], s2[MAX_N];
+
+// 读入的原始数据，低下标为高位 
+char ss1[MAX_N], ss2[MAX_N];
+
+// 转换后的数组，低下标为低位 
+int t1[MAX_N], t2[MAX_N];
+
+// 相加后的结果数组，低下标为低位 
+int result[MAX_N];
+
+// 转换后的结果数组，低下标为高位 
+char result_char[MAX_N];
+
+// 原始两个加数的长度 
+int a1,a2;
+
+// 相加后的结果的长度 
+int len_result;
+
+// 清空数组 
+void Clear() {
+	CLEAR(s1, 0);
+	CLEAR(s2, 0);
+	CLEAR(t1, 0);
+	CLEAR(t2, 0);
+	CLEAR(ss1, 0);
+	CLEAR(ss2, 0);
+	CLEAR(result, 0);
+	CLEAR(result_char, 0);
+}
+
+// 删除前导0 
+void delete_prefix_0(char* s, char* ss) {
+	for (int k = 0; s[k] != 0; k++) {
+		ss[k] = s[k]; // 把原始字符串备份到ss 
+	}
+	int l = strlen(s);
+	int i = 0, j = 0; // i为探测前导0的指针，j为写入指针 
+	for (; i < l; i++) {
+		if (s[i] != '0') break; // 遇到第一个不为0的字符，退出
+	}
+	int l_fact = l - i; // 去除前导0后的长度 
+	while (j < l_fact) {
+		s[j++] = s[i++]; // 整体往前挪i个位置 
+	}
+	while (j < l) { // 把后面的位全部置位空的 
+		s[j++] = 0;
+	}
+}
+
+// 读入数据 
+void Input(){
+    scanf("%s %s",s1,s2);
+    delete_prefix_0(s1, ss1);
+    delete_prefix_0(s2, ss2);
+    a1=strlen(s1);
+    a2=strlen(s2);
+}
+
+// 把char型数组转成逆序的int型数组，便于做加法 
+void Trans_char_int(char* s, int* t, int len){
+    for (int i = 0, j = len - 1; i < len; i++, j--) {
+    	t[i] = s[j] - '0'; // 把字符串数组s逆序写入数组t，写入前转为int型
+//    	printf("%d", t[i]);
+	}
+//	printf("\n");
+}
+
+// 把int型数组转回逆序的char型数组，便于输出 
+void Trans_int_char(int* t, char* s, int len) {
+	for (int i = 0, j = len - 1; i < len; i++, j--) {
+		s[i] = t[j] + '0'; // 把int数组逆序写入数组s，写入前转为char型 
+	}
+}
+
+// 对t1和t2求和，结果存入result 
+int* Plus() {
+	int carry = 0; // 进位
+	int i = 0, j = 0; // 待相加的两个数的位指针 
+	len_result = 0; // 结果的长度 
+	
+	// 对公共部分求和，从各位开始 
+	for (; i < a1 && j < a2; i++, j++) {
+		int sum = t1[i] + t2[i] + carry;
+		result[i] = sum % 10; // 余数作为这位的结果 
+		carry = sum / 10; // 商作为进位
+		len_result++;
+//		printf("%d", result[i]);
+	}
+	if (a1 > a2) { // a1仍有未加完的位 
+		for (; i < a1; i++) {
+			int sum = t1[i] + carry;
+			result[i] = sum % 10; // 余数作为这位的结果 
+			carry = sum / 10; // 商作为进位
+			len_result++;
+	//		printf("%d", result[i]);
+		}
+	} else if (a1 < a2) { // a2仍有未加完的位 
+		for (; j < a2; j++) {
+			int sum = t2[j] + carry;
+			result[j] = sum % 10; // 余数作为这位的结果 
+			carry = sum / 10; // 商作为进位
+			len_result++;
+	//		printf("%d", result[j]);
+		}
+	}
+	if (carry > 0) { // 最高位有进位的情况 
+		result[len_result++] = 1; // 两个不到10的数相加，结果不会超过20的
+		carry = 0;
+	}
+//	printf("\n");
+	return result;
+}
+
+int main() {
+	int t,z;
+	scanf("%d",&t);
+	for(z=0;z<t;z++){
+		Clear(); // 清空全局数组 
+	    Input(); // 读入数据到char型数组 
+		printf("Case %d:\n",z+1);
+		printf("%s + %s = ", ss1, ss2);
+	//	printf("%s %s\n", s1, s2);
+		
+		// 把char型数组转换为int型 
+		Trans_char_int(s1, t1, a1);
+		Trans_char_int(s2, t2, a2);
+		
+		// 求和 
+		int* result = Plus();
+		
+		// 把int型数组转回char型 
+		Trans_int_char(result, result_char, len_result);
+		
+		// 输出结果 
+		printf("%s\n\n", result_char);
+	}
+    return 0;
 }
