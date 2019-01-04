@@ -1,0 +1,23 @@
+使用C语言，复制代码，粘贴即可使用
+char* add(char *a, char *b, int m, int n) {
+	// 为结果分配内存空间。 
+	char *c = (char*)malloc((m + 2)* sizeof(char)); 
+	memset(c, 0, (m + 2) * sizeof(char)); 
+	// 将字符（0 + 0x30 到 9 + 0x30）转换为数字（0到9）进行计算。 
+	for (int i = m, j = n - 1; j >= 0; --i, --j) 
+		c[i] += (b[j] - 0x30); 
+	for (int i = m, j = m - 1; j >= 0; --i, --j) { 
+		c[i] += (a[j] - 0x30); 
+		if (c[i] > 9) { 
+				c[i - 1] += 1; c[i] -= 10; 
+			} 
+	} // 将由纯数字组成的结果转换为字符串，并去除首部可能还存在的零。 
+	c[m + 1] = '/0'; 
+	for (int i = 0; i != m + 1; ++i) 
+		c[i] += 0x30; 
+	if (c[0] == 0x30) 
+		for (int i = 0; c[i] != '/0'; ++i) 
+			c[i] = c[i + 1]; 
+			// 返回结果所在内存单元的首地址。 
+	return c; 
+}
